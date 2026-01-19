@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Western Highways — TMA Configurator (Prototype)</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <meta name="description" content="Customize TMA bed finishes and preview color swatches.">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <img src="LOGO 1.png" id="logo" alt="Western Highways logo">
+    </div>
+    <nav><a href="index.html">Home</a></nav>
+  </header>
+
+  <main>
+    <section class="viewer">
+      <h2>Model preview</h2>
+      <div id="model-sample" title="Model preview" class="model-container">Sample material</div>
+      <div id="price-estimate" class="price-badge">--</div>
+      <p class="hint">When you provide an exported glTF/GLB I will swap this preview for a Three.js viewer.</p>
+    </section>
+
+    <section class="configurator">
+      <h2>Configure Your Bed</h2>
+      <div class="controls-scroll">
+        <div class="control">
+          <label for="bed-length">Bed length (ft)</label>
+          <div class="length-row">
+            <select id="bed-length"></select>
+          </div>
+        </div>
+
+        <div class="control">
+            <label for="tma-type">TMA Type</label>
+            <div class="length-row">
+              <select id="tma-type"></select>
+            </div>
+        </div>
+
+        <div class="control">
+          <label for="acc-manbasket">Manbaskets</label>
+          <div id="accessories" class="accessories-row"></div>
+        </div>
+      </div>
+
+      <div class="control">
+        <button id="start-build">Start Build & Price</button>
+      </div>
+    </section>
+
+    
+  </main>
+
+  <footer>
+    <small>Western Highways Traffic Safety Products — Prototype configurator</small>
+  </footer>
+
+  <script>
+    // Bed length control (dropdown)
+    async function initConfigurator(){
+      try{
+        const res = await fetch('options.json');
+        const opts = await res.json();
+        const bed = document.getElementById('bed-length');
+        const priceEl = document.getElementById('price-estimate');
+
+        const lengths = opts.bedLengths; // array of numbers
+        bed.innerHTML = '';
+        const ph = document.createElement('option');
+        ph.value = '';
+        ph.textContent = 'Options';
+        ph.selected = !localStorage.getItem('wh:bedLength');
+        ph.disabled = true;
+        bed.appendChild(ph);
+        lengths.forEach(l => {
+          const opt = document.createElement('option');
+          opt.value = l;
+          opt.textContent = l + ' ft';
+          bed.appendChild(opt);
+        });
+
+        // populate TMA types
+        const tmaSelect = document.getElementById('tma-type');
+        if(opts.tmaTypes && Array.isArray(opts.tmaTypes)){
+          const phTma = document.createElement('option');
+          phTma.value = '';
+          phTma.textContent = 'Options';
+          phTma.selected = !localStorage.getItem('wh:tmaType');
+          phTma.disabled = true;
+          tmaSelect.appendChild(phTma);
+          opts.tmaTypes.forEach(t => {
+            const o = document.createElement('option');
+            o.value = t.id;
+            o.textContent = t.name;
+            o.dataset.priceDelta = t.priceDelta || 0;
+            tmaSelect.appendChild(o);
+          });
+        }
+
+        // force all selects to show the 'Options' placeholder on first load
+        bed.value = '';
+        tmaSelect.value = '';
+
+        // populate accessories (selects for boolean types)
+        const accContainer = document.getElementById('accessories');
+        if(opts.accessories && Array.isArray(opts.accessories)){
+          opts.accessories.forEach(a => {
+            const id = 'acc-' + a.id;
+            const row = document.createElement('div');
+            row.className = 'accessory-row';
+            let input;
+            if(a.type === 'boolean'){
+              input = document.createElement('select');
+              // add a top label only for the gates accessory and place it above the control
+              if(a.id === 'gates' || a.id === 'signcage' || a.id === 'buster_rack'){
+                const topLabel = document.createElement('label');
+                topLabel.className = 'accessory-top-label';
+                topLabel.htmlFor = id;
+                let labelText = 'Gate';
+                if(a.id === 'signcage') labelText = 'Signcage';
+                else if(a.id === 'buster_rack') labelText = 'Buster Rack';
+                topLabel.textContent = labelText;
+                accContainer.appendChild(topLabel);
+              }
+              input.id = id;
+              const phAcc = document.createElement('option');
+              phAcc.value = '';
+              phAcc.textContent = 'Options';
+              phAcc.selected = true;
+              phAcc.disabled = true;
+              input.appendChild(phAcc);
+              const optNo = document.createElement('option');
+              optNo.value = '0';
+              optNo.textContent = 'No';
+              const optYes = document.createElement('option');
+              optYes.value = '1';
+              optYes.textContent = 'Yes';
+              input.appendChild(optNo);
+              input.appendChild(optYes);
+              const saved = localStorage.getItem('wh:acc:' + a.id);
+              if(saved === '1') input.value = '1';
+              else if(saved === '0') input.value = '0';
+              else input.value = '';
+            } else {
+              input = document.createElement('input');
+              input.type = 'checkbox';
+              input.id = id;
+              input.checked = localStorage.getItem('wh:acc:' + a.id) === '1';
+            }
+            input.dataset.priceDelta = a.priceDelta || 0;
+            row.appendChild(input);
+            accContainer.appendChild(row);
+            input.addEventListener('change', updatePrice);
+          });
+        }
+
+        async function loadModel(url){
+          const container = document.getElementById('model-sample');
+          container.innerHTML = '';
+          if(!url) {
+            container.textContent = 'Sample material';
+            return;
+          }
+          try{
+            // check if file exists
+            const res = await fetch(url, { method: 'HEAD' });
+            if(!res.ok){
+              container.innerHTML = '<div class="model-missing">Model not found at ' + url + '. Place the file at this path or update options.json.</div>';
+              return;
+            }
+          }catch(err){
+            container.innerHTML = '<div class="model-missing">Unable to load model: ' + String(err) + '</div>';
+            return;
+          }
+
+          // If the file is an HTML viewer (e.g., eDrawings export), embed it in an iframe
+          const lower = url.toLowerCase();
+          if(lower.endsWith('.html') || lower.endsWith('.htm')){
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            container.appendChild(iframe);
+            return;
+          }
+
+          const mv = document.createElement('model-viewer');
+          mv.setAttribute('src', url);
+          mv.setAttribute('alt', '3D model');
+          mv.setAttribute('camera-controls', '');
+          mv.setAttribute('auto-rotate', '');
+          container.appendChild(mv);
+        }
+
+        function updatePrice(){
+          const len = parseInt(bed.value,10);
+          if(isNaN(len)){
+            priceEl.textContent = '--';
+            return;
+          }
+          const tmaId = tmaSelect.value;
+          localStorage.setItem('wh:bedLength', len);
+          if(tmaId) localStorage.setItem('wh:tmaType', tmaId);
+          const base = opts.pricing.basePrice;
+          const baseLen = opts.pricing.baseLength;
+          const per = opts.pricing.perFoot || 0;
+          const tma = (opts.tmaTypes||[]).find(x=>x.id===tmaId);
+          const tmaDelta = (tma && tma.priceDelta) ? tma.priceDelta : 0;
+          let accTotal = 0;
+          const accState = {};
+          if(opts.accessories && Array.isArray(opts.accessories)){
+            opts.accessories.forEach(a => {
+              const el = document.getElementById('acc-' + a.id);
+              let checked = false;
+              if(el){
+                if(el.tagName === 'SELECT') checked = el.value === '1';
+                else checked = el.checked;
+              }
+              if(checked) accTotal += a.priceDelta || 0;
+              const valStr = checked ? '1' : '0';
+              accState[a.id] = valStr;
+              localStorage.setItem('wh:acc:' + a.id, valStr);
+            });
+          }
+          const price = base + Math.max(0, (len - baseLen)) * per + tmaDelta + accTotal;
+          priceEl.textContent = '$' + price.toLocaleString();
+
+          // check for a matching model and load it
+          if(opts.models && Array.isArray(opts.models)){
+            // prefer accessory-specific models first — pick the most specific (most accessory keys)
+            const candidates = opts.models.filter(m => m.bedLength === len && m.tma === tmaId && m.accessories && Object.keys(m.accessories).every(k => String(m.accessories[k]) === String(accState[k] || '0')));
+            // sort by specificity (more accessory keys first)
+            candidates.sort((a,b)=>Object.keys(b.accessories).length - Object.keys(a.accessories).length);
+            let match = candidates.length ? candidates[0] : null;
+            if(!match){
+              // fallback to a generic model (no accessory requirements)
+              match = opts.models.find(m => m.bedLength === len && m.tma === tmaId && !m.accessories);
+            }
+            if(match && match.file){
+              loadModel(match.file);
+            } else {
+              loadModel(null);
+            }
+          } else {
+            loadModel(null);
+          }
+        }
+
+        bed.addEventListener('change', updatePrice);
+        tmaSelect.addEventListener('change', updatePrice);
+        updatePrice();
+      }catch(e){
+        console.error(e);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', ()=>{
+      initConfigurator();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "bedLengths": [16,17,18,19,20,21,22,23,24],
+  "tmaTypes": [
+    { "id": "blade", "name": "Blade TMA", "priceDelta": 0 },
+    { "id": "scorpion", "name": "Scorpion TMA", "priceDelta": 1500 }
+  ],
+  "accessories": [
+    { "id": "manbasket", "name": "Manbaskets", "type": "boolean", "priceDelta": 1200 },
+    { "id": "gates", "name": "Gates", "type": "boolean", "priceDelta": 0 },
+    { "id": "signcage", "name": "Signcage", "type": "boolean", "priceDelta": 800 },
+    { "id": "buster_rack", "name": "Buster Rack", "type": "boolean", "priceDelta": 500 }
+  ],
+  "models": [
+    { "bedLength": 18, "tma": "scorpion", "file": "18ft/18ft scorpion 1.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1" }, "file": "18ft/18ft scorpion 2.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1", "signcage": "1" }, "file": "18ft/18ft scorpion 3.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1" }, "file": "18ft/18ft scorpion 4.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "gates": "1" }, "file": "18ft/18ft scorpion 5.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "gates": "1", "signcage": "1" }, "file": "18ft/18ft scorpion 6.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "buster_rack": "1" }, "file": "18ft/18ft scorpion 7.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 8.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1", "signcage": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 9.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "gates": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 10.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 11.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "gates": "1", "signcage": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 12.HTML" }
+  ],
+  "pricing": {
+    "basePrice": 10000,
+    "baseLength": 16,
+    "perFoot": 250
+  }
+}
