@@ -8,21 +8,40 @@
     { "id": "manbasket", "name": "Manbaskets", "type": "boolean", "priceDelta": 1200 },
     { "id": "gates", "name": "Gates", "type": "boolean", "priceDelta": 0 },
     { "id": "signcage", "name": "Signcage", "type": "boolean", "priceDelta": 800 },
-    { "id": "buster_rack", "name": "Buster Rack", "type": "boolean", "priceDelta": 500 }
+    { "id": "buster_rack", "name": "Buster Rack", "type": "boolean", "priceDelta": 500 },
+    { "id": "camera_package", "name": "Camera Package", "type": "boolean", "priceDelta": 600 },
+    { "id": "light_package", "name": "Light Package (Beacons)", "type": "enum", "options": [
+      { "id": "A", "label": "A - 2 front, 2 rear, 2 top", "priceDelta": 0 },
+      { "id": "B", "label": "B - 2 front, 2 rear, 2 top, 1 each side", "priceDelta": 0 },
+      { "id": "C", "label": "C - 2 front, 2 rear, 2 top, 2 each side", "priceDelta": 0 },
+      { "id": "D", "label": "D - 4 front, 4 rear, 2 top", "priceDelta": 0 }
+    ] }
   ],
   "models": [
     { "bedLength": 18, "tma": "scorpion", "file": "18ft/18ft scorpion 1.HTML" },
+    { "bedLength": 18, "tma": "blade", "file": "18ft/18ft blade 1.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1" }, "file": "18ft/18ft scorpion 2.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "gates": "1" }, "file": "18ft/18ft blade 2.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1", "signcage": "1" }, "file": "18ft/18ft scorpion 3.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "gates": "1", "signcage": "1" }, "file": "18ft/18ft blade 3.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1" }, "file": "18ft/18ft scorpion 4.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "manbasket": "1" }, "file": "18ft/18ft blade 4.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "gates": "1" }, "file": "18ft/18ft scorpion 5.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "manbasket": "1", "gates": "1" }, "file": "18ft/18ft blade 5.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "gates": "1", "signcage": "1" }, "file": "18ft/18ft scorpion 6.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "manbasket": "1", "gates": "1", "signcage": "1" }, "file": "18ft/18ft blade 6.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "buster_rack": "1" }, "file": "18ft/18ft blade 7.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "gates": "1", "buster_rack": "1" }, "file": "18ft/18ft blade 8.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "buster_rack": "1" }, "file": "18ft/18ft scorpion 7.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 8.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1", "signcage": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 9.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "gates": "1", "signcage": "1", "buster_rack": "1" }, "file": "18ft/18ft blade 9.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "manbasket": "1", "gates": "1", "buster_rack": "1" }, "file": "18ft/18ft blade 10.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "gates": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 10.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 11.HTML" },
-    { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "gates": "1", "signcage": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 12.HTML" }
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "manbasket": "1", "gates": "1", "signcage": "1", "buster_rack": "1" }, "file": "18ft/18ft scorpion 12.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "manbasket": "1", "buster_rack": "1" }, "file": "18ft/18ft blade 11.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "manbasket": "1", "gates": "1", "signcage": "1", "buster_rack": "1" }, "file": "18ft/18ft blade 12.HTML" }
   ],
   "pricing": {
     "basePrice": 10000,
