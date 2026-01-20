@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Western Highways — TMA BEDS</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <meta name="description" content="Customize TMA bed finishes and preview color swatches.">
+</head>
+<body class="tma-page">
+  <header>
+    <div class="header-inner">
+      <img src="LOGO 1.png" id="logo" alt="Western Highways logo">
+      <img src="PNGS/lines.png" id="header-lines" alt="decorative lines" aria-hidden="true">
+      <div class="header-road" aria-hidden="true"></div>
+    </div>
+    <div class="header-divider" aria-hidden="true"></div>
+    <nav><a href="index.html">Home</a></nav>
+  </header>
+
+  <main>
+    <section class="viewer">
+      <h2>TMA BEDS</h2>
+      <div id="model-sample" title="Model preview" class="model-container">Sample material</div>
+      <div id="price-estimate" class="price-badge">--</div>
+    </section>
+
+    <section class="configurator">
+      <h2>Configure Your Bed</h2>
+      <div class="controls-scroll">
+        <div class="control">
+          <label for="bed-length">Bed length (ft)</label>
+          <div class="length-row">
+            <select id="bed-length"></select>
+          </div>
+        </div>
+
+        <div class="control">
+            <label for="tma-type">TMA Type</label>
+            <div class="length-row">
+              <select id="tma-type"></select>
+            </div>
+        </div>
+
+        <div class="control">
+          <label for="acc-manbasket">Manbaskets</label>
+          <div id="accessories" class="accessories-row"></div>
+        </div>
+      </div>
+
+      <div class="control">
+        <button id="start-build">Start Build & Price</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <small>Western Highways Traffic Safety Products — Prototype configurator</small>
+  </footer>
+
+  <script>
+    // Bed length control (dropdown)
+    async function initConfigurator(){
+      try{
+        const res = await fetch('options.json');
+        const opts = await res.json();
+        const bed = document.getElementById('bed-length');
+        const priceEl = document.getElementById('price-estimate');
+
+        const lengths = opts.bedLengths; // array of numbers
+        bed.innerHTML = '';
+        const ph = document.createElement('option');
+        ph.value = '';
+        ph.textContent = 'Options';
+        ph.selected = !localStorage.getItem('wh:bedLength');
+        ph.disabled = true;
+        bed.appendChild(ph);
+        lengths.forEach(l => {
+          const opt = document.createElement('option');
+          opt.value = l;
+          opt.textContent = l + ' ft';
+          bed.appendChild(opt);
+        });
+
+        // populate TMA types
+        const tmaSelect = document.getElementById('tma-type');
+        if(opts.tmaTypes && Array.isArray(opts.tmaTypes)){
+          const phTma = document.createElement('option');
+          phTma.value = '';
+          phTma.textContent = 'Options';
+          phTma.selected = !localStorage.getItem('wh:tmaType');
+          phTma.disabled = true;
+          tmaSelect.appendChild(phTma);
+          opts.tmaTypes.forEach(t => {
+            const o = document.createElement('option');
+            o.value = t.id;
+            o.textContent = t.name;
+            o.dataset.priceDelta = t.priceDelta || 0;
+            tmaSelect.appendChild(o);
+          });
+        }
+
+        // force all selects to show the 'Options' placeholder on first load
+        bed.value = '';
+        tmaSelect.value = '';
+
+        function updateSelectClass(sel){
+          if(!sel) return;
+          if(sel.value && String(sel.value) !== '') sel.classList.add('selected');
+          else sel.classList.remove('selected');
+        }
+
+        updateSelectClass(bed);
+        updateSelectClass(tmaSelect);
+
+        // populate accessories (selects for boolean types and enums)
+        const accContainer = document.getElementById('accessories');
+        if(opts.accessories && Array.isArray(opts.accessories)){
+          opts.accessories.forEach(a => {
+            const id = 'acc-' + a.id;
+            const row = document.createElement('div');
+            row.className = 'accessory-row';
+            let input;
+            // add a top label for specific accessories
+            if(a.id === 'gates' || a.id === 'signcage' || a.id === 'buster_rack' || a.id === 'camera_package' || a.id === 'light_package'){
+              const topLabel = document.createElement('label');
+              topLabel.className = 'accessory-top-label';
+              topLabel.htmlFor = id;
+              let labelText = 'Gates';
+              if(a.id === 'signcage') labelText = 'Signcage';
+              else if(a.id === 'buster_rack') labelText = 'Buster Rack';
+              else if(a.id === 'camera_package') labelText = 'Camera Package';
+              else if(a.id === 'light_package') labelText = 'Light Package (Beacons)';
+              topLabel.textContent = labelText;
+              accContainer.appendChild(topLabel);
+            }
+
+            if(a.type === 'boolean'){
+              // render yes/no as two large buttons with a hidden input to store the value
+              const toggle = document.createElement('div');
+              toggle.className = 'bool-toggle';
+              const btnNo = document.createElement('button');
+              btnNo.type = 'button';
+              btnNo.textContent = 'No';
+              const btnYes = document.createElement('button');
+              btnYes.type = 'button';
+              btnYes.textContent = 'Yes';
+              const hidden = document.createElement('input');
+              hidden.type = 'hidden';
+              hidden.id = id;
+              const saved = localStorage.getItem('wh:acc:' + a.id);
+              if(saved === '1'){
+                hidden.value = '1';
+                btnYes.classList.add('active');
+              } else if(saved === '0'){
+                hidden.value = '0';
+                btnNo.classList.add('active');
+              } else {
+                hidden.value = '';
+              }
+              btnNo.addEventListener('click', ()=>{
+                hidden.value = '0';
+                btnNo.classList.add('active');
+                btnYes.classList.remove('active');
+                updatePrice();
+              });
+              btnYes.addEventListener('click', ()=>{
+                hidden.value = '1';
+                btnYes.classList.add('active');
+                btnNo.classList.remove('active');
+                updatePrice();
+              });
+              input = hidden;
+              toggle.appendChild(btnNo);
+              toggle.appendChild(btnYes);
+              row.appendChild(toggle);
+            } else if(a.type === 'enum' && Array.isArray(a.options)){
+              input = document.createElement('select');
+              input.id = id;
+              const phAcc = document.createElement('option');
+              phAcc.value = '';
+              phAcc.textContent = 'Options';
+              phAcc.selected = true;
+              phAcc.disabled = true;
+              input.appendChild(phAcc);
+              a.options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt.id;
+                o.textContent = opt.label;
+                o.dataset.priceDelta = opt.priceDelta || 0;
+                input.appendChild(o);
+              });
+              const saved = localStorage.getItem('wh:acc:' + a.id);
+              if(saved) input.value = saved;
+              else input.value = '';
+              updateSelectClass(input);
+            } else {
+              input = document.createElement('input');
+              input.type = 'checkbox';
+              input.id = id;
+              input.checked = localStorage.getItem('wh:acc:' + a.id) === '1';
+            }
+
+            // store base priceDelta on the input for boolean/checkbox types; enum options carry their own price
+            input.dataset.priceDelta = a.priceDelta || 0;
+            row.appendChild(input);
+            accContainer.appendChild(row);
+            input.addEventListener('change', ()=>{ updateSelectClass(input); updatePrice(); });
+          });
+        }
+
+        async function loadModel(url){
+          const container = document.getElementById('model-sample');
+          container.innerHTML = '';
+          if(!url) {
+            container.textContent = 'Sample material';
+            return;
+          }
+          try{
+            // check if file exists
+            const res = await fetch(url, { method: 'HEAD' });
+            if(!res.ok){
+              container.innerHTML = '<div class="model-missing">Model not found at ' + url + '. Place the file at this path or update options.json.</div>';
+              return;
+            }
+          }catch(err){
+            container.innerHTML = '<div class="model-missing">Unable to load model: ' + String(err) + '</div>';
+            return;
+          }
+
+          // If the file is an HTML viewer (e.g., eDrawings export), embed it in an iframe
+          const lower = url.toLowerCase();
+          if(lower.endsWith('.html') || lower.endsWith('.htm')){
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            container.appendChild(iframe);
+            return;
+          }
+
+          const mv = document.createElement('model-viewer');
+          mv.setAttribute('src', url);
+          mv.setAttribute('alt', '3D model');
+          mv.setAttribute('camera-controls', '');
+          mv.setAttribute('auto-rotate', '');
+          container.appendChild(mv);
+        }
+
+        function updatePrice(){
+          const len = parseInt(bed.value,10);
+          if(isNaN(len)){
+            priceEl.textContent = '--';
+            return;
+          }
+          const tmaId = tmaSelect.value;
+          localStorage.setItem('wh:bedLength', len);
+          if(tmaId) localStorage.setItem('wh:tmaType', tmaId);
+          const base = opts.pricing.basePrice;
+          const baseLen = opts.pricing.baseLength;
+          const per = opts.pricing.perFoot || 0;
+          const tma = (opts.tmaTypes||[]).find(x=>x.id===tmaId);
+          const tmaDelta = (tma && tma.priceDelta) ? tma.priceDelta : 0;
+          let accTotal = 0;
+          const accState = {};
+          if(opts.accessories && Array.isArray(opts.accessories)){
+            opts.accessories.forEach(a => {
+              const el = document.getElementById('acc-' + a.id);
+              let valStr = '';
+              if(a.type === 'boolean'){
+                let checked = false;
+                if(el){
+                  if(el.tagName === 'SELECT') checked = el.value === '1';
+                  else if(el.tagName === 'INPUT' && el.type === 'hidden') checked = el.value === '1';
+                  else checked = el.checked;
+                }
+                if(checked) accTotal += a.priceDelta || 0;
+                valStr = checked ? '1' : '0';
+              } else if(a.type === 'enum'){
+                if(el && el.tagName === 'SELECT'){
+                  const sel = el;
+                  const selVal = sel.value || '';
+                  const selectedOption = sel.options[sel.selectedIndex];
+                  const optPrice = selectedOption ? Number(selectedOption.dataset.priceDelta || 0) : 0;
+                  accTotal += optPrice;
+                  valStr = selVal;
+                }
+              } else {
+                // checkbox
+                let checked = false;
+                if(el) checked = el.checked;
+                if(checked) accTotal += a.priceDelta || 0;
+                valStr = checked ? '1' : '0';
+              }
+              accState[a.id] = valStr;
+              localStorage.setItem('wh:acc:' + a.id, valStr);
+            });
+          }
+          const price = base + Math.max(0, (len - baseLen)) * per + tmaDelta + accTotal;
+          priceEl.textContent = '$' + price.toLocaleString();
+
+          // check for a matching model and load it
+          if(opts.models && Array.isArray(opts.models)){
+            // prefer accessory-specific models first — pick the most specific (most accessory keys)
+            const candidates = opts.models.filter(m => m.bedLength === len && m.tma === tmaId && m.accessories && Object.keys(m.accessories).every(k => String(m.accessories[k]) === String(accState[k] || '0')));
+            // sort by specificity (more accessory keys first)
+            candidates.sort((a,b)=>Object.keys(b.accessories).length - Object.keys(a.accessories).length);
+            let match = candidates.length ? candidates[0] : null;
+            if(!match){
+              // fallback to a generic model (no accessory requirements)
+              match = opts.models.find(m => m.bedLength === len && m.tma === tmaId && !m.accessories);
+            }
+            if(match && match.file){
+              loadModel(match.file);
+            } else {
+              loadModel(null);
+            }
+          } else {
+            loadModel(null);
+          }
+        }
+
+        bed.addEventListener('change', ()=>{ updateSelectClass(bed); updatePrice(); });
+        tmaSelect.addEventListener('change', ()=>{ updateSelectClass(tmaSelect); updatePrice(); });
+        updatePrice();
+      }catch(e){
+        console.error(e);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', ()=>{
+      initConfigurator();
+      stretchHeaderLines();
+    });
+    window.addEventListener('resize', ()=>{ stretchHeaderLines(); });
+
+    function stretchHeaderLines(){
+      const header = document.querySelector('header');
+      const logo = document.getElementById('logo');
+      const lines = document.getElementById('header-lines');
+      if(!header || !logo || !lines) return;
+      // ensure header is positioned so absolute children align to it
+      header.style.position = header.style.position || 'relative';
+      // measure insets
+      const hRect = header.getBoundingClientRect();
+      const lRect = logo.getBoundingClientRect();
+      const padRight = parseInt(getComputedStyle(header).paddingRight) || 0;
+      // left offset relative to header (space to right of logo)
+      const left = Math.max(0, lRect.right - hRect.left + 8);
+      lines.style.position = 'absolute';
+      lines.style.left = left + 'px';
+      // set right negative padding so image reaches viewport edge
+      lines.style.right = (-padRight) + 'px';
+      // move header lines slightly upward on the TMA page
+      if(document.body && document.body.classList && document.body.classList.contains('tma-page')){
+        // place the top of the lines image at 25% of the header height
+        const headerHeight = hRect.height || 0;
+        const topPx = headerHeight * 0.25;
+        lines.style.top = topPx + 'px';
+        lines.style.transform = 'none';
+      } else {
+        lines.style.top = '50%';
+        lines.style.transform = 'translateY(-50%)';
+      }
+      lines.style.height = lines.style.height || '24px';
+      lines.style.objectFit = 'cover';
+      lines.style.maxWidth = 'none';
+      lines.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
