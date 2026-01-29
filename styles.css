@@ -38,6 +38,12 @@ main{display:flex;gap:28px;padding:18px}
 .swatches{width:320px}
 #viewer{position:relative}
 .viewer #model-sample{width:100%;height:406px;border:1px solid #cfcfcf;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:600;background:var(--brand-white);box-shadow:0 0 0 10px rgba(0,0,0,0.06)}
+/* spinner overlay for preview while loading */
+#model-sample{position:relative}
+.viewer-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.18);z-index:40}
+.viewer-spinner .loader{width:44px;height:44px;border-radius:50%;border:4px solid rgba(255,255,255,0.15);border-top-color:var(--brand-yellow);animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.model-missing{padding:12px;background:rgba(255,255,255,0.02);border-radius:6px;color:var(--brand-white);font-size:13px;margin-top:8px}
 /* ensure embedded viewers fill the container */
 .model-container{height:406px}
 .model-container model-viewer,.model-container iframe{width:100%;height:100%;border:0}
@@ -53,6 +59,12 @@ main{display:flex;gap:28px;padding:18px}
 .color-swatch:focus{outline:3px solid rgba(242,205,1,0.25)}
 /* ensure very dark swatches remain visible on dark backgrounds */
 .color-swatch.dark-swatch{border:2px solid rgba(255,255,255,0.95)}
+/* disabled swatch state (used when Gates = No) */
+.color-swatch.disabled{opacity:0.45;pointer-events:none;filter:grayscale(20%)}
+
+/* gates color picker styling */
+.gate-color-picker{margin-left:10px;width:44px;height:36px;padding:4px;border-radius:4px;border:1px solid rgba(255,255,255,0.06);background:#fff;cursor:pointer}
+.gate-color-picker:disabled{opacity:0.45;cursor:not-allowed}
 .configurator h2{margin-top:0}
 .control{margin-bottom:12px}
 .length-row{display:flex;gap:12px;align-items:center}

@@ -152,31 +152,70 @@
               hidden.type = 'hidden';
               hidden.id = id;
               const saved = localStorage.getItem('wh:acc:' + a.id);
+              // gates color swatches (use same options as bed_color)
+              let swatchWrapForGates = null;
+              let hiddenColorForGates = null;
+              if(a.id === 'gates'){
+                const bedColorAcc = (opts.accessories||[]).find(x=>x.id==='bed_color');
+                const colorOptions = bedColorAcc && Array.isArray(bedColorAcc.options) ? bedColorAcc.options : [];
+                swatchWrapForGates = document.createElement('div');
+                swatchWrapForGates.className = 'color-swatches';
+                hiddenColorForGates = document.createElement('input');
+                hiddenColorForGates.type = 'hidden';
+                hiddenColorForGates.id = id + '-color';
+                const savedColorId = localStorage.getItem('wh:acc:' + a.id + ':color') || '';
+                hiddenColorForGates.value = savedColorId;
+                colorOptions.forEach(opt => {
+                  const btn = document.createElement('button');
+                  btn.type = 'button';
+                  btn.className = 'color-swatch';
+                  btn.title = opt.label;
+                  btn.dataset.value = opt.id;
+                  btn.style.backgroundColor = opt.hex || '#ccc';
+                  if(opt.id === 'black' || (opt.hex && opt.hex.toLowerCase() === '#000000')) btn.classList.add('dark-swatch');
+                  btn.setAttribute('aria-label', opt.label);
+                  if(savedColorId === opt.id) btn.classList.add('active');
+                  btn.addEventListener('click', ()=>{
+                    swatchWrapForGates.querySelectorAll('.color-swatch').forEach(b=>b.classList.remove('active'));
+                    btn.classList.add('active');
+                    hiddenColorForGates.value = opt.id;
+                    localStorage.setItem('wh:acc:' + a.id + ':color', opt.id);
+                    updatePrice();
+                  });
+                  swatchWrapForGates.appendChild(btn);
+                });
+              }
               if(saved === '1'){
                 hidden.value = '1';
                 btnYes.classList.add('active');
+                if(swatchWrapForGates) swatchWrapForGates.querySelectorAll('.color-swatch').forEach(b=>b.classList.remove('disabled'));
               } else if(saved === '0'){
                 hidden.value = '0';
                 btnNo.classList.add('active');
+                if(swatchWrapForGates) swatchWrapForGates.querySelectorAll('.color-swatch').forEach(b=>b.classList.add('disabled'));
               } else {
                 hidden.value = '';
+                if(swatchWrapForGates) swatchWrapForGates.querySelectorAll('.color-swatch').forEach(b=>b.classList.add('disabled'));
               }
               btnNo.addEventListener('click', ()=>{
                 hidden.value = '0';
                 btnNo.classList.add('active');
                 btnYes.classList.remove('active');
+                if(swatchWrapForGates) swatchWrapForGates.querySelectorAll('.color-swatch').forEach(b=>b.classList.add('disabled'));
                 updatePrice();
               });
               btnYes.addEventListener('click', ()=>{
                 hidden.value = '1';
                 btnYes.classList.add('active');
                 btnNo.classList.remove('active');
+                if(swatchWrapForGates) swatchWrapForGates.querySelectorAll('.color-swatch').forEach(b=>b.classList.remove('disabled'));
                 updatePrice();
               });
               input = hidden;
               toggle.appendChild(btnNo);
               toggle.appendChild(btnYes);
               row.appendChild(toggle);
+              if(swatchWrapForGates){ row.appendChild(swatchWrapForGates); row.appendChild(hiddenColorForGates); }
             } else if(a.type === 'enum' && Array.isArray(a.options)){
               // special-case bed_color to render visual swatches instead of a dropdown
               if(a.id === 'bed_color'){
@@ -245,29 +284,62 @@
 
         async function loadModel(url){
           const container = document.getElementById('model-sample');
-          container.innerHTML = '';
+          // if no model specified, show placeholder text but keep any existing preview
           if(!url) {
-            container.textContent = 'Sample material';
-            return;
-          }
-          try{
-            // check if file exists
-            const res = await fetch(url, { method: 'HEAD' });
-            if(!res.ok){
-              container.innerHTML = '<div class="model-missing">Model not found at ' + url + '. Place the file at this path or update options.json.</div>';
-              return;
-            }
-          }catch(err){
-            container.innerHTML = '<div class="model-missing">Unable to load model: ' + String(err) + '</div>';
+            // if container empty, show placeholder
+            if(!container.firstElementChild) container.textContent = 'Sample material';
             return;
           }
 
-          // If the file is an HTML viewer (e.g., eDrawings export), embed it in an iframe
+          // show spinner overlay immediately
+          let spinner = container.querySelector('.viewer-spinner');
+          if(!spinner){
+            spinner = document.createElement('div');
+            spinner.className = 'viewer-spinner';
+            spinner.innerHTML = '<div class="loader"></div>';
+            container.appendChild(spinner);
+          }
+
+          // verify URL quickly (HEAD) but don't clear current preview
+          try{
+            const res = await fetch(url, { method: 'HEAD' });
+            if(!res.ok){
+              spinner.remove();
+              const err = document.createElement('div');
+              err.className = 'model-missing';
+              err.textContent = 'Model not found at ' + url + '. Place the file at this path or update options.json.';
+              // keep existing preview but show error message briefly
+              container.appendChild(err);
+              setTimeout(()=>{ if(err.parentNode) err.remove(); }, 4000);
+              return;
+            }
+          }catch(err){
+            spinner.remove();
+            const e = document.createElement('div');
+            e.className = 'model-missing';
+            e.textContent = 'Unable to load model: ' + String(err);
+            container.appendChild(e);
+            setTimeout(()=>{ if(e.parentNode) e.remove(); }, 4000);
+            return;
+          }
+
           const lower = url.toLowerCase();
+          // create the new preview element but keep it hidden until loaded
           if(lower.endsWith('.html') || lower.endsWith('.htm')){
             const iframe = document.createElement('iframe');
             iframe.src = url;
+            iframe.style.visibility = 'hidden';
+            iframe.style.opacity = '0';
+            iframe.style.transition = 'opacity .28s ease';
+            // append so it starts loading, but don't remove existing preview yet
             container.appendChild(iframe);
+            iframe.addEventListener('load', ()=>{
+              // remove other preview elements except this iframe and spinner
+              Array.from(container.children).forEach(ch=>{ if(ch !== iframe && !ch.classList.contains('viewer-spinner')) ch.remove(); });
+              spinner.remove();
+              iframe.style.visibility = 'visible';
+              iframe.style.opacity = '1';
+            });
             return;
           }
 
@@ -276,7 +348,16 @@
           mv.setAttribute('alt', '3D model');
           mv.setAttribute('camera-controls', '');
           mv.setAttribute('auto-rotate', '');
+          mv.style.visibility = 'hidden';
+          mv.style.opacity = '0';
+          mv.style.transition = 'opacity .28s ease';
           container.appendChild(mv);
+          mv.addEventListener('load', ()=>{
+            Array.from(container.children).forEach(ch=>{ if(ch !== mv && !ch.classList.contains('viewer-spinner')) ch.remove(); });
+            spinner.remove();
+            mv.style.visibility = 'visible';
+            mv.style.opacity = '1';
+          });
         }
 
         function updatePrice(){
@@ -307,7 +388,17 @@
                   else checked = el.checked;
                 }
                 if(checked) accTotal += a.priceDelta || 0;
-                valStr = checked ? '1' : '0';
+                // for gates, prefer the selected color id when enabled so models can be color-specific
+                if(a.id === 'gates'){
+                  if(checked){
+                    const colorEl = document.getElementById('acc-' + a.id + '-color');
+                    valStr = (colorEl && colorEl.value) ? colorEl.value : '1';
+                  } else {
+                    valStr = '0';
+                  }
+                } else {
+                  valStr = checked ? '1' : '0';
+                }
               } else if(a.type === 'enum'){
                 if(el){
                     if(el.tagName === 'SELECT'){
