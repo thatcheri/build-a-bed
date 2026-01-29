@@ -10,6 +10,13 @@
     { "id": "signcage", "name": "Signcage", "type": "boolean", "priceDelta": 800 },
     { "id": "buster_rack", "name": "Buster Rack", "type": "boolean", "priceDelta": 500 },
     { "id": "camera_package", "name": "Camera Package", "type": "boolean", "priceDelta": 600 },
+    { "id": "bed_color", "name": "Bed Color", "type": "enum", "options": [
+      { "id": "white", "label": "White", "hex": "#ffffff", "priceDelta": 0 },
+      { "id": "black", "label": "Black", "hex": "#000000", "priceDelta": 0 },
+      { "id": "yellow", "label": "Yellow", "hex": "#f2cd01", "priceDelta": 0 },
+      { "id": "gray", "label": "Gray", "hex": "#808080", "priceDelta": 0 },
+      { "id": "orange", "label": "Orange", "hex": "#ff7f00", "priceDelta": 0 }
+    ] },
     { "id": "light_package", "name": "Light Package (Beacons)", "type": "enum", "options": [
       { "id": "A", "label": "A - 2 front, 2 rear, 2 top", "priceDelta": 0 },
       { "id": "B", "label": "B - 2 front, 2 rear, 2 top, 1 each side", "priceDelta": 0 },
@@ -19,7 +26,15 @@
   ],
   "models": [
     { "bedLength": 18, "tma": "scorpion", "file": "18ft/18ft scorpion 1.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "bed_color": "white" }, "file": "18ft/18ft scorpion 1.1.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "bed_color": "yellow" }, "file": "18ft/18ft scorpion 1.2.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "bed_color": "gray" }, "file": "18ft/18ft scorpion 1.3.HTML" },
+    { "bedLength": 18, "tma": "scorpion", "accessories": { "bed_color": "orange" }, "file": "18ft/18ft scorpion 1.4.HTML" },
     { "bedLength": 18, "tma": "blade", "file": "18ft/18ft blade 1.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "bed_color": "white" }, "file": "18ft/18ft blade 1.1.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "bed_color": "yellow" }, "file": "18ft/18ft blade 1.2.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "bed_color": "gray" }, "file": "18ft/18ft blade 1.3.HTML" },
+    { "bedLength": 18, "tma": "blade", "accessories": { "bed_color": "orange" }, "file": "18ft/18ft blade 1.4.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1" }, "file": "18ft/18ft scorpion 2.HTML" },
     { "bedLength": 18, "tma": "blade", "accessories": { "gates": "1" }, "file": "18ft/18ft blade 2.HTML" },
     { "bedLength": 18, "tma": "scorpion", "accessories": { "gates": "1", "signcage": "1" }, "file": "18ft/18ft scorpion 3.HTML" },

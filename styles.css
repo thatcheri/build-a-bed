@@ -45,6 +45,14 @@ main{display:flex;gap:28px;padding:18px}
 .hint{color:var(--brand-gray);font-size:13px}
 .swatch{width:40px;height:40px;border-radius:4px;border:2px solid rgba(0,0,0,0.08);cursor:pointer}
 .swatch:focus{outline:3px solid rgba(242,205,1,0.25)}
+
+/* bed color swatches */
+.color-swatches{display:flex;gap:8px;padding-top:8px}
+.color-swatch{width:36px;height:36px;border-radius:4px;border:2px solid rgba(0,0,0,0.08);cursor:pointer;box-shadow:0 1px 0 rgba(0,0,0,0.06);overflow:hidden}
+.color-swatch.active{outline:3px solid rgba(242,205,1,0.85);border-color:var(--brand-yellow)}
+.color-swatch:focus{outline:3px solid rgba(242,205,1,0.25)}
+/* ensure very dark swatches remain visible on dark backgrounds */
+.color-swatch.dark-swatch{border:2px solid rgba(255,255,255,0.95)}
 .configurator h2{margin-top:0}
 .control{margin-bottom:12px}
 .length-row{display:flex;gap:12px;align-items:center}

@@ -124,7 +124,7 @@
             row.className = 'accessory-row';
             let input;
             // add a top label for specific accessories
-            if(a.id === 'gates' || a.id === 'signcage' || a.id === 'buster_rack' || a.id === 'camera_package' || a.id === 'light_package'){
+            if(a.id === 'gates' || a.id === 'signcage' || a.id === 'buster_rack' || a.id === 'camera_package' || a.id === 'light_package' || a.id === 'bed_color'){
               const topLabel = document.createElement('label');
               topLabel.className = 'accessory-top-label';
               topLabel.htmlFor = id;
@@ -133,6 +133,7 @@
               else if(a.id === 'buster_rack') labelText = 'Buster Rack';
               else if(a.id === 'camera_package') labelText = 'Camera Package';
               else if(a.id === 'light_package') labelText = 'Light Package (Beacons)';
+              else if(a.id === 'bed_color') labelText = 'Bed Color';
               topLabel.textContent = labelText;
               accContainer.appendChild(topLabel);
             }
@@ -177,25 +178,56 @@
               toggle.appendChild(btnYes);
               row.appendChild(toggle);
             } else if(a.type === 'enum' && Array.isArray(a.options)){
-              input = document.createElement('select');
-              input.id = id;
-              const phAcc = document.createElement('option');
-              phAcc.value = '';
-              phAcc.textContent = 'Options';
-              phAcc.selected = true;
-              phAcc.disabled = true;
-              input.appendChild(phAcc);
-              a.options.forEach(opt => {
-                const o = document.createElement('option');
-                o.value = opt.id;
-                o.textContent = opt.label;
-                o.dataset.priceDelta = opt.priceDelta || 0;
-                input.appendChild(o);
-              });
-              const saved = localStorage.getItem('wh:acc:' + a.id);
-              if(saved) input.value = saved;
-              else input.value = '';
-              updateSelectClass(input);
+              // special-case bed_color to render visual swatches instead of a dropdown
+              if(a.id === 'bed_color'){
+                const swatchWrap = document.createElement('div');
+                swatchWrap.className = 'color-swatches';
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.id = id;
+                const saved = localStorage.getItem('wh:acc:' + a.id) || '';
+                hidden.value = saved;
+                a.options.forEach(opt => {
+                  const btn = document.createElement('button');
+                  btn.type = 'button';
+                  btn.className = 'color-swatch';
+                  btn.title = opt.label;
+                  btn.dataset.value = opt.id;
+                  btn.style.backgroundColor = opt.hex || '#ccc';
+                  if(opt.id === 'black' || (opt.hex && opt.hex.toLowerCase() === '#000000')) btn.classList.add('dark-swatch');
+                  btn.setAttribute('aria-label', opt.label);
+                  if(saved === opt.id) btn.classList.add('active');
+                  btn.addEventListener('click', ()=>{
+                    swatchWrap.querySelectorAll('.color-swatch').forEach(b=>b.classList.remove('active'));
+                    btn.classList.add('active');
+                    hidden.value = opt.id;
+                    updatePrice();
+                  });
+                  swatchWrap.appendChild(btn);
+                });
+                input = hidden;
+                row.appendChild(swatchWrap);
+              } else {
+                input = document.createElement('select');
+                input.id = id;
+                const phAcc = document.createElement('option');
+                phAcc.value = '';
+                phAcc.textContent = 'Options';
+                phAcc.selected = true;
+                phAcc.disabled = true;
+                input.appendChild(phAcc);
+                a.options.forEach(opt => {
+                  const o = document.createElement('option');
+                  o.value = opt.id;
+                  o.textContent = opt.label;
+                  o.dataset.priceDelta = opt.priceDelta || 0;
+                  input.appendChild(o);
+                });
+                const saved = localStorage.getItem('wh:acc:' + a.id);
+                if(saved) input.value = saved;
+                else input.value = '';
+                updateSelectClass(input);
+              }
             } else {
               input = document.createElement('input');
               input.type = 'checkbox';
@@ -277,14 +309,19 @@
                 if(checked) accTotal += a.priceDelta || 0;
                 valStr = checked ? '1' : '0';
               } else if(a.type === 'enum'){
-                if(el && el.tagName === 'SELECT'){
-                  const sel = el;
-                  const selVal = sel.value || '';
-                  const selectedOption = sel.options[sel.selectedIndex];
-                  const optPrice = selectedOption ? Number(selectedOption.dataset.priceDelta || 0) : 0;
-                  accTotal += optPrice;
-                  valStr = selVal;
-                }
+                if(el){
+                    if(el.tagName === 'SELECT'){
+                      const sel = el;
+                      const selVal = sel.value || '';
+                      const selectedOption = sel.options[sel.selectedIndex];
+                      const optPrice = selectedOption ? Number(selectedOption.dataset.priceDelta || 0) : 0;
+                      accTotal += optPrice;
+                      valStr = selVal;
+                    } else if(el.tagName === 'INPUT' && el.type === 'hidden'){
+                      // enum rendered as hidden input (e.g., bed_color swatches)
+                      valStr = el.value || '';
+                    }
+                  }
               } else {
                 // checkbox
                 let checked = false;
